@@ -20,8 +20,8 @@ pub struct PartNumber {
     right: [u32; 2],
 }
 
-pub fn get_symbol_coordinates(input: &str) -> Vec<[u32; 2]> {
-    let re = Regex::new(r"[^\w\d\.]").unwrap();
+pub fn get_symbol_coordinates(input: &str, pattern: &str) -> Vec<[u32; 2]> {
+    let re = Regex::new(pattern).unwrap();
     let mut coll: Vec<[u32; 2]> = [].to_vec();
     input.lines().enumerate().for_each(|(idx, line)| {
         re.find_iter(line)
@@ -99,8 +99,37 @@ pub fn filter_digits_by_symbol_distance(
     valid_digits.iter().map(|pn| pn.digit).collect()
 }
 
+pub fn filter_digits_adjacent_to_asterisk(
+    symbol_coords: &Vec<[u32; 2]>,
+    digit_coords: &Vec<PartNumber>,
+    max_distance: u32,
+) -> Vec<u32> {
+    let mut coll: Vec<u32> = [].to_vec();
+    for s in symbol_coords {
+        let mut count = 0;
+        let mut agg = 1;
+
+        for pn in digit_coords {
+            if is_within_threshold(pn.left, pn.right, *s, max_distance) {
+                count += 1;
+                agg *= pn.digit;
+
+                if count > 2 {
+                    break;
+                }
+            }
+        }
+
+        if count == 2 {
+            coll.push(agg);
+        }
+    }
+
+    coll
+}
+
 pub fn part_one(input: &str) -> Option<u32> {
-    let symbol_coordinates = get_symbol_coordinates(input);
+    let symbol_coordinates = get_symbol_coordinates(input, r"[^\w\d\.]");
     let digit_coordinates = get_digit_coordinates(input);
     let filtered_digits =
         filter_digits_by_symbol_distance(&symbol_coordinates, &digit_coordinates, 1);
@@ -111,7 +140,12 @@ pub fn part_one(input: &str) -> Option<u32> {
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    None
+    let symbol_coordinates = get_symbol_coordinates(input, r"\*");
+    let digit_coordinates = get_digit_coordinates(input);
+    let filtered_digits = filter_digits_adjacent_to_asterisk(&symbol_coordinates, &digit_coordinates, 1);
+    let sum = filtered_digits.iter().sum();
+
+    Some(sum)
 }
 
 #[cfg(test)]
@@ -127,6 +161,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(467835));
     }
 }
