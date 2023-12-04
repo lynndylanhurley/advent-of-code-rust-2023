@@ -10,56 +10,91 @@ advent_of_code::solution!(4);
 // Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36
 // Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11
 
-pub fn part_one(input: &str) -> Option<u32> {
+pub fn get_winning_number_count(input: &str) -> usize {
+    // get number of winning values per card
+    let first_line = input
+        .lines()
+        .next()
+        .unwrap();
+
+    let winning_count_re = Regex::new(r"(\d+)").unwrap();
+    let prefix_re = Regex::new(r".*:").unwrap();
+    let suffix_re = Regex::new(r"\|.*").unwrap();
+
+    let first_line_no_prefix = prefix_re.replace(first_line, "");
+    let first_line_no_suffix = suffix_re.replace(&first_line_no_prefix, "");
+
+    let winning_numbers: Vec<&str> = winning_count_re
+        .find_iter(&first_line_no_suffix)
+        .map(|c| c.as_str())
+        .collect();
+
+    winning_numbers.len()
+}
+
+pub fn get_winning_values(input: &str) -> Vec<Vec<u32>> {
     let re = Regex::new(r"\d+").unwrap();
-    let card_values: Vec<[u32; 36]> = input
+    let card_values: Vec<Vec<u32>> = input
         .lines()
         .map(|line| {
-            let res: [u32; 36] = re.find_iter(line)
+            let res: Vec<u32> = re
+                .find_iter(line)
                 .map(|s| s.as_str().parse().unwrap_or(0))
-                .collect::<Vec<u32>>()
-                .try_into()
-                .unwrap();
+                .collect::<Vec<u32>>();
             res
         })
         .collect();
 
-    let winning_number_sets: Vec<[u32; 10]> = card_values
+    let winning_number_end_idx = get_winning_number_count(input) + 1;
+
+    let winning_number_sets: Vec<Vec<u32>> = card_values
         .clone()
         .into_iter()
         .map(|card| {
-            let res: [u32; 10] = card[1..11].try_into().unwrap();
+            let res: Vec<u32> = card[1..winning_number_end_idx].to_vec();
             res
         })
         .collect();
 
-    let player_number_sets: Vec<[u32; 25]> = card_values
+    let player_number_sets: Vec<Vec<u32>> = card_values
         .clone()
         .into_iter()
         .map(|card| {
-            let res: [u32; 25] = card[11..].try_into().unwrap();
+            let res: Vec<u32> = card[winning_number_end_idx..].to_vec();
             res
         })
         .collect();
 
-    let winning_values: Vec<Vec<u32>> = player_number_sets
+    player_number_sets
         .clone()
         .into_iter()
         .enumerate()
         .map(|(idx, card)| {
-            let winning: HashSet<u32> = winning_number_sets[idx].into_iter().collect();
+            let winning: HashSet<u32> = winning_number_sets[idx].clone().into_iter().collect();
             let player: HashSet<u32> = card.into_iter().collect();
             let matches = winning.intersection(&player);
             matches.cloned().collect()
         })
-        .collect();
+        .collect()
+}
 
-    let points: Vec<u32> = winning_values.into_iter().map(|card| card.iter().fold(0, |acc, _| if acc == 0 { 1 } else { acc * 2 })).collect();
+pub fn part_one(input: &str) -> Option<u32> {
+    let winning_values = get_winning_values(input);
+
+    let points: Vec<u32> = winning_values
+        .into_iter()
+        .map(|card| {
+            card.iter()
+                .fold(0, |acc, _| if acc == 0 { 1 } else { acc * 2 })
+        })
+        .collect();
 
     Some(points.iter().sum())
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
+    let winning_values = get_winning_values(input);
+
     None
 }
 
@@ -76,6 +111,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(30));
     }
 }
