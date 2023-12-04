@@ -97,7 +97,7 @@ pub fn part_two(input: &str) -> Option<u32> {
         let count = card.len();
 
         for j in i + 1..i + count + 1 {
-            acc[j] += 1 * acc[i] as u32;
+            acc[j] += 1 * acc[i];
         }
     }
 
