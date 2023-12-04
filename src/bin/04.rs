@@ -12,10 +12,7 @@ advent_of_code::solution!(4);
 
 pub fn get_winning_number_count(input: &str) -> usize {
     // get number of winning values per card
-    let first_line = input
-        .lines()
-        .next()
-        .unwrap();
+    let first_line = input.lines().next().unwrap();
 
     let winning_count_re = Regex::new(r"(\d+)").unwrap();
     let prefix_re = Regex::new(r".*:").unwrap();
@@ -94,8 +91,17 @@ pub fn part_one(input: &str) -> Option<u32> {
 
 pub fn part_two(input: &str) -> Option<u32> {
     let winning_values = get_winning_values(input);
+    let mut acc: Vec<u32> = vec![1; winning_values.len()];
 
-    None
+    for (i, card) in winning_values.iter().enumerate() {
+        let count = card.len();
+
+        for j in i + 1..i + count + 1 {
+            acc[j] += 1 * acc[i] as u32;
+        }
+    }
+
+    Some(acc.iter().sum())
 }
 
 #[cfg(test)]
