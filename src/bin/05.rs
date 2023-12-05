@@ -68,14 +68,21 @@ pub fn get_seeds_from_input(input: &str) -> Vec<u32> {
 pub fn part_one(input: &str) -> Option<u32> {
     let seeds = get_seeds_from_input(input);
     let listings = get_listings_from_input(input);
-
     let locations: Vec<u32> = seeds.iter().map(|seed| seed_to_location(&listings, *seed)).collect();
 
     Some(locations.into_iter().min().unwrap())
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    None
+    let seeds: Vec<u32> = get_seeds_from_input(input)
+        .chunks_exact(2)
+        .map(|chunk| chunk[0]..chunk[0]+chunk[1])
+        .flatten()
+        .collect();
+
+    let listings = get_listings_from_input(input);
+    let locations: Vec<u32> = seeds.iter().map(|seed| seed_to_location(&listings, *seed)).collect();
+    Some(locations.into_iter().min().unwrap())
 }
 
 #[cfg(test)]
@@ -91,6 +98,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(46));
     }
 }
